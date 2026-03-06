@@ -8,9 +8,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Kita siapkan warna khas Teknik (bisa diubah nanti)
-        'ukkom-navy': '#1e3a8a', 
-        'ukkom-orange': '#f97316',
+        // Palet Baru ala SaaS Modern
+        'ukkom-darknavy': '#09090b', // Sangat gelap hampir hitam (Background Hero)
+        'ukkom-carddark': '#18181b', // Warna card di area gelap
+        'ukkom-navy': '#1e3a8a', // Biru Universitas
+        'ukkom-tosca': '#2dd4bf', // Aksen utama (Neon)
+        'ukkom-purple': '#a855f7', // Gradasi ungu SaaS
       }
     },
   },
