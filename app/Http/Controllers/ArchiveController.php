@@ -9,12 +9,17 @@ use App\Models\Archive; // Kita akan buat modelnya nanti
 
 class ArchiveController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Mengambil semua foto, diurutkan dari yang paling baru
-        // lalu kita KELOMPOKKAN (groupBy) berdasarkan kolom 'category'
-        $archives = \App\Models\Archive::orderBy('event_date', 'desc')->get()->groupBy('category');
-        
+        $query = \App\Models\Archive::orderBy('event_date', 'desc');
+
+        // Jika ada input pencarian
+        if ($request->has('search') && $request->search != '') {
+            $query->where('title', 'like', '%' . $request->search . '%')
+                  ->orWhere('category', 'like', '%' . $request->search . '%');
+        }
+
+        $archives = $query->get()->groupBy('category');
         return view('arsip.index', compact('archives'));
     }
 

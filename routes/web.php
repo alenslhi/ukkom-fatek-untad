@@ -1,30 +1,46 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
+// Import Controller Publik
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PemerhatiController;
 use App\Http\Controllers\ArchiveController;
-use App\Http\Controllers\AdminSettingController;
-use App\Http\Controllers\AdminActivityController;
-use App\Http\Controllers\AdminContactController;
-use App\Http\Controllers\AdminArchiveController;
 use App\Http\Controllers\AuthController;
 
-// --- AREA PUBLIK (Bisa diakses siapa saja) ---
+// Import Controller Admin
+use App\Http\Controllers\AdminSettingController;
+use App\Http\Controllers\AdminActivityController;
+use App\Http\Controllers\AdminArchiveController;
+use App\Http\Controllers\AdminContactController;
+use App\Http\Controllers\AdminBoardMemberController;
+
+/*
+|--------------------------------------------------------------------------
+| AREA PUBLIK (Bisa diakses siapa saja)
+|--------------------------------------------------------------------------
+*/
 Route::get('/', [HomeController::class, 'index']);
 Route::get('/profil', [ProfileController::class, 'index']);
 Route::get('/arsip', [ArchiveController::class, 'index']);
 Route::get('/pemerhati', [PemerhatiController::class, 'index']);
 
-// --- AREA LOGIN & LOGOUT ---
-// Jika user memaksa masuk admin tapi belum login, Laravel otomatis mencari route bernama 'login'
+/*
+|--------------------------------------------------------------------------
+| AREA LOGIN & LOGOUT
+|--------------------------------------------------------------------------
+*/
 Route::get('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/login', [AuthController::class, 'authenticate']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 
-// --- AREA ADMIN (GEMBOK TERPASANG: Hanya yang sudah login yang bisa masuk) ---
+/*
+|--------------------------------------------------------------------------
+| AREA ADMIN (GEMBOK TERPASANG)
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth'])->group(function () {
     
     // 1. Pengaturan Beranda
@@ -37,7 +53,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/activities/store', [AdminActivityController::class, 'store']);
     Route::delete('/admin/activities/{id}', [AdminActivityController::class, 'destroy']);
 
-    // 3. Kelola Arsip Dokumentasi
+    // 3. Kelola Arsip Dokumentasi (SUDAH DIPERBAIKI KE AdminArchiveController)
     Route::get('/admin/archives', [AdminArchiveController::class, 'index']);
     Route::post('/admin/archives/store', [AdminArchiveController::class, 'store']);
     Route::delete('/admin/archives/{id}', [AdminArchiveController::class, 'destroy']);
@@ -46,5 +62,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/contacts', [AdminContactController::class, 'index']);
     Route::post('/admin/contacts/store', [AdminContactController::class, 'store']);
     Route::delete('/admin/contacts/{id}', [AdminContactController::class, 'destroy']);
+
+    // 5. Kelola Pengurus UKKOM
+    Route::get('/admin/board', [AdminBoardMemberController::class, 'index']);
+    Route::post('/admin/board/store', [AdminBoardMemberController::class, 'store']);
+    Route::delete('/admin/board/{id}', [AdminBoardMemberController::class, 'destroy']);
 
 });

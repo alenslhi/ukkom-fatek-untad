@@ -9,58 +9,59 @@ use Intervention\Image\Laravel\Facades\Image;
 
 class AdminArchiveController extends Controller
 {
-    // Menampilkan halaman utama Kelola Arsip (Form + Tabel sekaligus)
     public function index()
     {
-        $archives = Archive::orderBy('created_at', 'desc')->get();
+        $archives = Archive::orderBy('event_date', 'desc')->get();
         return view('admin.archives.index', compact('archives'));
     }
 
-    // Memproses upload dan kompresi
     public function store(Request $request)
     {
         $request->validate([
             'title' => 'required',
             'category' => 'required',
-            'image' => 'required|image|mimes:jpeg,png,jpg,webp|max:10240',
-            'event_date' => 'required|date'
+            'event_date' => 'required|date',
+            'images.*' => 'required|image|mimes:jpeg,png,jpg,webp|max:10240'
         ]);
 
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $filename = time() . '_' . $image->getClientOriginalName();
-            $destinationPath = storage_path('app/public/archives');
+        $imagePaths = []; // Array penampung foto
 
-            if (!file_exists($destinationPath)) {
-                mkdir($destinationPath, 0755, true);
+        if ($request->hasFile('images')) {
+            $destinationPath = storage_path('app/public/archives');
+            if (!file_exists($destinationPath)) mkdir($destinationPath, 0755, true);
+
+            foreach ($request->file('images') as $image) {
+                $filename = uniqid() . '_' . time() . '.' . $image->getClientOriginalExtension();
+                Image::read($image)->scale(width: 1200)->save($destinationPath . '/' . $filename, 70);
+                $imagePaths[] = 'archives/' . $filename; // Masukkan ke array
             }
 
-            Image::read($image)
-                ->scale(width: 1200)
-                ->save($destinationPath . '/' . $filename, 70);
-
+            // Simpan sebagai 1 Data Album
             Archive::create([
                 'title' => $request->title,
                 'category' => $request->category,
-                'image_path' => 'archives/' . $filename,
                 'event_date' => $request->event_date,
+                'images' => $imagePaths, // Otomatis jadi JSON
             ]);
 
-            return back()->with('success', 'Foto dokumentasi berhasil diupload!');
+            return back()->with('success', 'Album dokumentasi berhasil diupload!');
         }
 
-        return back()->with('error', 'Gagal mengupload gambar.');
+        return back()->with('error', 'Pilih minimal 1 foto.');
     }
 
-    // Menghapus foto
     public function destroy($id)
     {
         $archive = Archive::findOrFail($id);
-        if (Storage::exists('public/' . $archive->image_path)) {
-            Storage::delete('public/' . $archive->image_path);
+        
+        // Hapus semua foto di dalam array
+        if (is_array($archive->images)) {
+            foreach ($archive->images as $path) {
+                if (Storage::exists('public/' . $path)) Storage::delete('public/' . $path);
+            }
         }
         $archive->delete();
         
-        return back()->with('success', 'Foto dokumentasi berhasil dihapus permanen!');
+        return back()->with('success', 'Album beserta seluruh fotonya berhasil dihapus!');
     }
 }

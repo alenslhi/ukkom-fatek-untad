@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('archives', function ($table) {
+        Schema::create('archives', function (Blueprint $table) {
             $table->id();
             $table->string('title');
             $table->string('category');
-            $table->string('image_path');
+            $table->json('images'); // <-- Ini kuncinya, menyimpan array gambar
             $table->date('event_date');
             $table->timestamps();
         });
