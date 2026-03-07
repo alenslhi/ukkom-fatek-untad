@@ -21,17 +21,19 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        // Jika email & password cocok dengan di database
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            
-            // Masuk ke dashboard admin
-            return redirect()->intended('/admin/settings')->with('success', 'Selamat datang kembali, Pengurus!');
+
+            // Cek Role
+            if (Auth::user()->role === 'admin') {
+                return redirect()->intended('/admin/settings');
+            } elseif (Auth::user()->role === 'pengurus') {
+                return redirect()->intended('/pengurus/dashboard'); 
+            }
         }
 
-        // Jika salah, kembalikan ke halaman login dengan pesan error
         return back()->withErrors([
-            'email' => 'Email atau password yang Anda masukkan salah.',
+            'email' => 'Email atau password salah.',
         ])->onlyInput('email');
     }
 

@@ -23,7 +23,11 @@
                     <a href="/pemerhati" class="text-gray-300 hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] transition">Pemerhati</a>
                     
                     @auth
-                        <a href="/admin/settings" class="px-6 py-2.5 rounded-full bg-ukkom-tosca hover:bg-teal-300 text-black font-extrabold shadow-[0_0_15px_rgba(45,212,191,0.4)] hover:shadow-[0_0_25px_rgba(45,212,191,0.6)] transition">Dapur Admin</a>
+                        @if(auth()->user()->role === 'admin')
+                            <a href="/admin/settings" class="px-6 py-2.5 rounded-full bg-ukkom-tosca hover:bg-teal-300 text-black font-extrabold shadow-[0_0_15px_rgba(45,212,191,0.4)] hover:shadow-[0_0_25px_rgba(45,212,191,0.6)] transition">Dapur Admin</a>
+                        @elseif(auth()->user()->role === 'pengurus')
+                            <a href="/pengurus/dashboard" class="px-6 py-2.5 rounded-full bg-ukkom-purple hover:bg-fuchsia-400 text-white font-extrabold shadow-[0_0_15px_rgba(168,85,247,0.4)] hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] transition">Dashboard Pengurus</a>
+                        @endif
                     @else
                         <a href="/login" class="px-6 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold transition">Login</a>
                     @endauth

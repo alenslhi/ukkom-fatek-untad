@@ -9,12 +9,13 @@ use App\Http\Controllers\PemerhatiController;
 use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\AuthController;
 
-// Import Controller Admin
+// Import Controller Admin & Pengurus
 use App\Http\Controllers\AdminSettingController;
 use App\Http\Controllers\AdminActivityController;
 use App\Http\Controllers\AdminArchiveController;
 use App\Http\Controllers\AdminContactController;
 use App\Http\Controllers\AdminBoardMemberController;
+use App\Http\Controllers\PengurusController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,10 +39,23 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 /*
 |--------------------------------------------------------------------------
-| AREA ADMIN (GEMBOK TERPASANG)
+| AREA PENGURUS & ADMIN (Wajib Login)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->group(function () {
+    
+    // Area Khusus Dashboard Pengurus (Bisa diakses oleh divisi Diakonia / Admin)
+    Route::get('/pengurus/dashboard', [PengurusController::class, 'dashboard']);
+    Route::post('/pengurus/import', [PengurusController::class, 'importExcel']); // <-- FITUR IMPORT EXCEL
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| AREA KHUSUS ADMIN (GEMBOK EXTRA: Hanya untuk role 'admin')
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])->group(function () {
     
     // 1. Pengaturan Beranda
     Route::get('/admin/settings', [AdminSettingController::class, 'edit']);
@@ -53,7 +67,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/activities/store', [AdminActivityController::class, 'store']);
     Route::delete('/admin/activities/{id}', [AdminActivityController::class, 'destroy']);
 
-    // 3. Kelola Arsip Dokumentasi (SUDAH DIPERBAIKI KE AdminArchiveController)
+    // 3. Kelola Arsip Dokumentasi
     Route::get('/admin/archives', [AdminArchiveController::class, 'index']);
     Route::post('/admin/archives/store', [AdminArchiveController::class, 'store']);
     Route::delete('/admin/archives/{id}', [AdminArchiveController::class, 'destroy']);
