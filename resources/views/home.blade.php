@@ -39,7 +39,7 @@
 </div>
 @endif
 
-<div id="jadwal" class="py-10 mb-20">
+<div id="jadwal" class="py-10 mb-10">
     <div class="max-w-7xl mx-auto px-6">
         <div class="mb-12 text-center md:text-left md:flex justify-between items-end">
             <div>
@@ -90,4 +90,38 @@
         @endif
     </div>
 </div>
+
+@if(isset($ultahHariIni) && $ultahHariIni->count() > 0)
+<div class="pb-20">
+    <div class="max-w-6xl mx-auto px-6">
+        <div class="bg-gradient-to-r from-ukkom-tosca/5 to-ukkom-purple/5 border border-ukkom-tosca/20 rounded-3xl p-6 md:p-8 relative overflow-hidden backdrop-blur-md">
+            
+            <div class="absolute top-0 right-0 w-48 h-48 bg-ukkom-tosca/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+
+            <div class="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6">
+                <div class="text-center md:text-left md:w-1/3 shrink-0">
+                    <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/5 border border-white/10 mb-4 shadow-lg">
+                        <span class="text-xl">🎉</span>
+                    </div>
+                    <h2 class="text-2xl font-extrabold text-white mb-2">Ulang Tahun <br><span class="text-ukkom-tosca">Hari Ini!</span></h2>
+                    <p class="text-gray-400 text-xs leading-relaxed max-w-xs mx-auto md:mx-0">Mari mendoakan rekan kita yang bersukacita merayakan hari kelahirannya.</p>
+                </div>
+
+                <div class="md:w-2/3 w-full max-h-[220px] overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-ukkom-tosca/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-ukkom-tosca/50">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                        @foreach($ultahHariIni as $m)
+                        <div class="bg-black/20 backdrop-blur-sm border border-white/5 rounded-xl p-4 hover:border-ukkom-tosca/40 transition duration-300 flex flex-col justify-center">
+                            <h3 class="text-sm font-bold text-white mb-1 truncate" title="{{ $m->name }}">{{ $m->name }} {{ $m->title ? ', '.$m->title : '' }}</h3>
+                            <div class="text-xs text-gray-400 font-medium truncate">{{ $m->major }}</div>
+                            <div class="mt-2"><span class="text-[10px] text-ukkom-tosca font-mono bg-ukkom-tosca/10 px-2 py-0.5 rounded">Angkatan {{ $m->angkatan ?? '-' }}</span></div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+@endif
 @endsection

@@ -81,8 +81,12 @@ class MembersImport implements ToCollection
             if (str_starts_with($phone, '0')) $phone = '62' . substr($phone, 1);
             elseif (str_starts_with($phone, '8')) $phone = '62' . $phone;
 
+            // ==========================================
+            // REVISI: AI PENYETARAAN NAMA JURUSAN
+            // ==========================================
             $majorKey = collect(array_keys($rowData))->first(fn($k) => str_contains($k, 'jurus') || str_contains($k, 'prodi') || str_contains($k, 'jusr'));
-            $major = ucwords(strtolower(trim($rowData[$majorKey] ?? '')));
+            $rawMajor = trim($rowData[$majorKey] ?? '');
+            $major = $this->normalizeMajor($rawMajor);
             
             $addressKey = collect(array_keys($rowData))->first(fn($k) => str_contains($k, 'alamat'));
             $address = trim($rowData[$addressKey] ?? '');
@@ -99,7 +103,6 @@ class MembersImport implements ToCollection
                     try { 
                         $parsed = Date::excelToDateTimeObject($ttlRaw)->format('Y-m-d'); 
                         $parts = explode('-', $parsed);
-                        // Cek keabsahan tanggal sebelum dimasukkan!
                         if (count($parts) == 3 && checkdate((int)$parts[1], (int)$parts[2], (int)$parts[0])) {
                             $birthDate = $parsed;
                         }
@@ -120,11 +123,9 @@ class MembersImport implements ToCollection
                         $month = (int)$m[2];
                         $year = (int)$m[3];
                         
-                        // Cek normal: DD-MM-YYYY
                         if (checkdate($month, $day, $year)) {
                             $birthDate = sprintf('%04d-%02d-%02d', $year, $month, $day);
                         } 
-                        // Cek format bule terbalik (seperti kasus si Axel): MM-DD-YYYY
                         elseif (checkdate($day, $month, $year)) {
                             $birthDate = sprintf('%04d-%02d-%02d', $year, $day, $month);
                         }
@@ -169,5 +170,48 @@ class MembersImport implements ToCollection
                 $dataToUpdate
             );
         }
+    }
+
+    /**
+     * Fungsi Helper untuk membersihkan dan menyamakan nama jurusan
+     */
+    private function normalizeMajor($rawMajor)
+    {
+        $lowerMajor = strtolower(trim($rawMajor));
+        
+        // Bersihkan tanda baca aneh agar pengecekan lebih mudah
+        $cleanMajor = preg_replace('/[^a-z0-9 ]/', '', $lowerMajor);
+
+        if (empty($cleanMajor)) {
+            return null;
+        }
+
+        // Kamus Standarisasi FATEK UNTAD
+        if (str_contains($cleanMajor, 'informa') || $cleanMajor === 'ti') {
+            return 'S1 Teknik Informatika';
+        } elseif (str_contains($cleanMajor, 'sistem infor') || $cleanMajor === 'si' || str_contains($cleanMajor, 'sisfo')) {
+            return 'S1 Sistem Informasi';
+        } elseif (str_contains($cleanMajor, 'sipil')) {
+            // Cek apakah ada embel-embel D3, jika tidak anggap S1
+            if (str_contains($cleanMajor, 'd3') || str_contains($cleanMajor, 'diii')) {
+                return 'D3 Teknik Sipil';
+            }
+            return 'S1 Teknik Sipil';
+        } elseif (str_contains($cleanMajor, 'arsitek')) {
+            return 'S1 Arsitektur';
+        } elseif (str_contains($cleanMajor, 'mesin')) {
+            return 'S1 Teknik Mesin';
+        } elseif (str_contains($cleanMajor, 'elektro')) {
+            return 'S1 Teknik Elektro';
+        } elseif (str_contains($cleanMajor, 'pwk') || str_contains($cleanMajor, 'wilayah') || str_contains($cleanMajor, 'planologi')) {
+            return 'S1 Perencanaan Wilayah dan Kota';
+        } elseif (str_contains($cleanMajor, 'geologi')) {
+            return 'S1 Teknik Geologi';
+        } elseif (str_contains($cleanMajor, 'lingkungan')) {
+            return 'S1 Teknik Lingkungan';
+        }
+
+        // Jika tidak masuk kategori di atas, kembalikan versi aslinya dengan huruf kapital di tiap awal kata
+        return ucwords($lowerMajor);
     }
 }

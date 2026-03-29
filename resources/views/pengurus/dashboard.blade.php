@@ -60,7 +60,7 @@
                         @foreach($ultahHariIni as $m)
                         <div class="bg-black/30 p-3 rounded-xl border border-white/5">
                             <div class="font-bold text-ukkom-tosca">{{ $m->name }} {{ $m->title ? ', '.$m->title : '' }}</div>
-                            <div class="text-xs text-gray-400 mt-1">{{ $m->major }} • {{ $m->status }}</div>
+                            <div class="text-xs text-gray-400 mt-1">{{ $m->major }} • {{ $m->status }} - Angkatan {{ $m->angkatan ?? '-' }}</div>
                             <div class="text-xs text-gray-300 font-mono mt-1">📞 {{ $m->phone ?? 'Tidak ada nomor' }}</div>
                         </div>
                         @endforeach
@@ -89,7 +89,7 @@
                         @foreach($ultahBesok as $m)
                         <div class="bg-black/20 p-3 rounded-xl border border-white/5">
                             <div class="font-bold text-white">{{ $m->name }}</div>
-                            <div class="text-xs text-gray-400">{{ $m->major }}</div>
+                            <div class="text-xs text-gray-400">{{ $m->major }} • Angkatan {{ $m->angkatan ?? '-' }}</div>
                         </div>
                         @endforeach
                     </div>
@@ -103,47 +103,92 @@
         </div>
 
         <div class="lg:col-span-2">
-            <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-xl h-full">
-                <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2 border-b border-white/10 pb-4">
-                    <span>📅</span> Daftar Ulang Tahun Bulan {{ $today->translatedFormat('F') }}
-                </h2>
+            <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-xl h-full flex flex-col">
+                
+                <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/10 pb-4">
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        @if($isSearching)
+                            <span>🔍</span> Hasil Pencarian: "{{ $search }}"
+                        @else
+                            <span>📅</span> Daftar Ulang Tahun Bulan {{ $today->translatedFormat('F') }}
+                        @endif
+                    </h2>
+                    
+                    <form action="/pengurus/dashboard" method="GET" class="w-full sm:w-auto relative flex items-center gap-2">
+                        <div class="relative w-full sm:w-64">
+                            <input type="text" name="search" value="{{ $search }}" placeholder="Cari di database..." class="w-full bg-black/30 border border-white/10 text-white text-sm rounded-full focus:ring-ukkom-tosca focus:border-ukkom-tosca block pl-10 pr-4 py-2 transition placeholder-gray-500">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                        </div>
+                        @if($isSearching)
+                            <a href="/pengurus/dashboard" class="text-gray-400 hover:text-red-400 transition" title="Hapus Pencarian">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </a>
+                        @endif
+                    </form>
+                </div>
 
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto flex-grow">
                     <table class="w-full text-left border-collapse min-w-[500px]">
                         <thead>
                             <tr class="bg-white/5 text-sm text-gray-400">
-                                <th class="p-3 rounded-tl-lg w-24">Tanggal</th>
+                                <th class="p-3 rounded-tl-lg w-32">Tanggal Lahir</th>
                                 <th class="p-3">Nama Lengkap & Gelar</th>
                                 <th class="p-3">Jurusan</th>
                                 <th class="p-3 rounded-tr-lg">Nomor HP</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($ultahBulanIni as $m)
+                            @forelse($tableData as $m)
                                 @php
-                                    // Beri warna khusus jika tanggal ultahnya sama dengan hari ini
-                                    $isToday = \Carbon\Carbon::parse($m->birth_date)->day == $today->day;
+                                    $hasBirthDate = !empty($m->birth_date);
+                                    $isToday = false;
+                                    
+                                    if($hasBirthDate) {
+                                        $birthDate = \Carbon\Carbon::parse($m->birth_date);
+                                        $isToday = $birthDate->day == $today->day && $birthDate->month == $today->month;
+                                    }
                                 @endphp
                                 <tr class="border-b border-white/5 {{ $isToday ? 'bg-ukkom-tosca/10 border-ukkom-tosca/30' : 'hover:bg-white/5' }} text-gray-300 transition text-sm">
                                     <td class="p-3 font-bold {{ $isToday ? 'text-ukkom-tosca' : 'text-white' }}">
-                                        {{ \Carbon\Carbon::parse($m->birth_date)->format('d M') }}
-                                        @if($isToday) <span class="text-[10px] bg-ukkom-tosca text-black px-1.5 py-0.5 rounded ml-1">HARI INI</span> @endif
+                                        @if($hasBirthDate)
+                                            @if($isSearching)
+                                                {{ $birthDate->format('d M Y') }}
+                                            @else
+                                                {{ $birthDate->format('d M') }}
+                                            @endif
+                                            @if($isToday) <span class="text-[10px] bg-ukkom-tosca text-black px-1.5 py-0.5 rounded ml-1 mt-1 block w-max">HARI INI</span> @endif
+                                        @else
+                                            <span class="text-gray-500 font-normal italic text-xs">Belum diisi</span>
+                                        @endif
                                     </td>
                                     <td class="p-3">
                                         <div class="font-bold">{{ $m->name }} {{ $m->title ? ', '.$m->title : '' }}</div>
-                                        <div class="text-xs text-gray-500">{{ $m->status }}</div>
+                                        <div class="text-xs text-gray-500">{{ $m->status }} - Angkatan {{ $m->angkatan ?? '-' }}</div>
                                     </td>
                                     <td class="p-3 text-gray-400">{{ $m->major }}</td>
                                     <td class="p-3 font-mono text-xs">{{ $m->phone ?? '-' }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="p-8 text-center text-gray-500">Belum ada data ulang tahun di bulan ini.</td>
+                                    <td colspan="4" class="p-8 text-center text-gray-500">
+                                        @if($isSearching)
+                                            Data tidak ditemukan untuk pencarian <span class="text-white font-bold">"{{ $search }}"</span>.
+                                        @else
+                                            Belum ada data ulang tahun di bulan ini.
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
+                
+                <div class="mt-6">
+                    {{ $tableData->links('components.pagination') }}
+                </div>
+
             </div>
         </div>
 
@@ -152,15 +197,16 @@
 
 <script>
     function copyUltahHariIni() {
-        let textToCopy = "🎉 *INFORMASI ULANG TAHUN HARI INI* 🎉\nSyalom rekan-rekan pengurus, mari kita doakan anggota UKKOM yang berulang tahun pada hari ini:\n\n";
+        // Menambahkan format hari dan tanggal di judul text
+        let textToCopy = "🎉 *INFORMASI ULANG TAHUN HARI INI - {{ $today->translatedFormat('l, d F Y') }}* 🎉\n\n";
         
         @foreach($ultahHariIni as $index => $m)
-            textToCopy += "{{ $index + 1 }}. *{{ $m->name }} {{ $m->title ? ', '.$m->title : '' }}*\n";
-            textToCopy += "   Jurusan: {{ $m->major }} ({{ $m->status }})\n";
+            textToCopy += "{{ $index + 1 }}. *{{ $m->name }} {{ $m->title ? ', '.$m->title : '' }} *\n";
+            textToCopy += "   Jurusan: {{ $m->major }} ({{ $m->status }} - Angkatan {{ $m->angkatan ?? '-' }})\n";
             textToCopy += "   No. HP: {{ $m->phone ?? '-' }}\n\n";
         @endforeach
-        
-        textToCopy += "Tuhan Yesus memberkati pelayanan kita semua. 🙏";
+
+        // Teks pembuka dan penutup (Syalom... dan Tuhan Yesus...) sudah dihapus sesuai permintaan
 
         navigator.clipboard.writeText(textToCopy).then(function() {
             let statusText = document.getElementById('copy-status');

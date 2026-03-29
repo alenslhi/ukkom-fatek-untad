@@ -10,7 +10,7 @@ use App\Imports\MembersImport;
 
 class PengurusController extends Controller
 {
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         if (auth()->user()->role !== 'pengurus' && auth()->user()->role !== 'admin') {
             return redirect('/');
@@ -18,12 +18,30 @@ class PengurusController extends Controller
 
         $today = Carbon::today();
         $tomorrow = Carbon::tomorrow();
+        
+        $search = $request->input('search');
+        $isSearching = !empty($search);
 
         $ultahHariIni = Member::whereMonth('birth_date', $today->month)->whereDay('birth_date', $today->day)->get();
         $ultahBesok = Member::whereMonth('birth_date', $tomorrow->month)->whereDay('birth_date', $tomorrow->day)->get();
-        $ultahBulanIni = Member::whereMonth('birth_date', $today->month)->orderByRaw('DAY(birth_date) ASC')->get();
+        
+        // Logika pemisahan data tabel berdasarkan pencarian
+        if ($isSearching) {
+            // Jika mencari, ambil dari seluruh database tanpa mempedulikan bulan
+            $tableData = Member::where('name', 'like', "%{$search}%")
+                ->orWhere('major', 'like', "%{$search}%")
+                ->orWhere('angkatan', 'like', "%{$search}%")
+                ->orderBy('name', 'asc')
+                ->paginate(10)
+                ->appends(['search' => $search]);
+        } else {
+            // Jika tidak mencari, tampilkan daftar ulang tahun bulan ini secara default
+            $tableData = Member::whereMonth('birth_date', $today->month)
+                ->orderByRaw('DAY(birth_date) ASC')
+                ->paginate(10);
+        }
 
-        return view('pengurus.dashboard', compact('ultahHariIni', 'ultahBesok', 'ultahBulanIni', 'today'));
+        return view('pengurus.dashboard', compact('ultahHariIni', 'ultahBesok', 'tableData', 'today', 'search', 'isSearching'));
     }
 
     public function importExcel(Request $request)
@@ -36,9 +54,7 @@ class PengurusController extends Controller
         try {
             $count = 0;
             foreach ($request->file('file_excel') as $file) {
-                // Ambil nama file asli (contoh: "DATA_BASE... - 2025.csv")
                 $filename = $file->getClientOriginalName();
-                // Kirim nama file ke dalam constructor MembersImport
                 Excel::import(new MembersImport($filename), $file);
                 $count++;
             }
